@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "NativeInjector": {
+      "commandName": "Project",
+      "commandLineArgs": "Terraria \"C:\\Users\\chair\\source\\repos\\NativeInjectionTest\\NativeInjectionTest\\bin\\Debug\\net7.0\\win-x64\\native\\NativeInjectionTest.dll\""
+    }
+  }
+}
