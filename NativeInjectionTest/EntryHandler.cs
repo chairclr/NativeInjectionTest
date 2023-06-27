@@ -17,7 +17,7 @@ public class EntryHandler
             $"""
             NativeEntry() has been called
 
-            Process Id: {Process.GetCurrentProcess().Id}
+            Process Id: {Environment.ProcessId}
             Thread Id: {Environment.CurrentManagedThreadId}
             Architecture: {(Environment.Is64BitProcess ? "x86_64" : "x86")}
             Assembly Name: {assembly.GetName()}
