@@ -36,7 +36,7 @@ public partial class NativeMethods
 
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public static partial bool WriteProcessMemory(nint hProcess, nint lpBaseAddress, byte[] lpBuffer, uint nSize, out nuint lpNumberOfBytesWritten);
+    public static partial bool WriteProcessMemory(nint hProcess, nint lpBaseAddress, Span<byte> lpBuffer, uint nSize, out nuint lpNumberOfBytesWritten);
 
     [LibraryImport("kernel32.dll")]
     public static partial nint CreateRemoteThread(nint hProcess, nint lpThreadAttributes, uint dwStackSize, nint lpStartAddress, nint lpParameter, uint dwCreationFlags, nint lpThreadId);
@@ -46,11 +46,7 @@ public partial class NativeMethods
 
     [LibraryImport("kernel32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool ReadProcessMemory(nint hProcess, nint lpBaseAddress, byte[] lpBuffer, int dwSize, out nint lpNumberOfBytesRead);
-
-    [LibraryImport("kernel32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool ReadProcessMemory(nint hProcess, nint lpBaseAddress, ref byte lpBuffer, int dwSize, out nint lpNumberOfBytesRead);
+    private static partial bool ReadProcessMemory(nint hProcess, nint lpBaseAddress, Span<byte> lpBuffer, int dwSize, out nint lpNumberOfBytesRead);
 
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [SuppressUnmanagedCodeSecurity]
@@ -61,20 +57,21 @@ public partial class NativeMethods
     {
         T ret = default;
 
-        byte[] buffer = new byte[Unsafe.SizeOf<T>()];
-        ReadProcessMemory(process, address, buffer, buffer.Length, out _);
+        Span<byte> bytes = MemoryMarshal.AsBytes(new Span<T>(ref ret));
 
-        Unsafe.Copy(ref ret, Unsafe.AsPointer(ref buffer[0]));
+        ReadProcessMemory(process, address, bytes, bytes.Length, out _);
 
         return ret;
     }
 
     private unsafe static Span<T> ReadRemoteStructArray<T>(nint process, nint address, int count) where T : unmanaged
     {
-        byte[] buffer = new byte[Unsafe.SizeOf<T>() * count];
-        ReadProcessMemory(process, address, buffer, buffer.Length, out _);
+        Span<T> buffer = new Span<T>(new T[count]);
+        Span<byte> bytes = MemoryMarshal.AsBytes(buffer);
 
-        return MemoryMarshal.CreateSpan(ref Unsafe.As<byte, T>(ref buffer[0]), count);
+        ReadProcessMemory(process, address, bytes, bytes.Length, out _);
+
+        return buffer;
     }
 
     public static nint GetRemoteProcAddress(Process process, ProcessModule processModule, string functionName)

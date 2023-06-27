@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace NativeInjector;
@@ -17,7 +18,7 @@ internal class Injector
             throw new FileNotFoundException("Invalid file path", filePath);
         }
 
-        if (ProcessContainsModule(process, filePath))
+        if (process.TryGetModuleByPath(filePath, out _))
         {
             throw new InvalidOperationException($"Process already contains module '{filePath}'");
         }
@@ -37,27 +38,17 @@ internal class Injector
 
         try
         {
-            LoadLibrary(openProcHandle, filePath);
+            LoadLibrary(process, openProcHandle, filePath);
 
             // We must refresh the process since we've loaded a new module
             process.Refresh();
 
-            ProcessModule? module = null;
-
-            for (int i = 0; i < process.Modules.Count; i++)
+            if (!process.TryGetModuleByPath(filePath, out ProcessModule? module))
             {
-                if (process.Modules[i].FileName == filePath)
-                {
-                    module = process.Modules[i];
-                }
+                throw new Exception("Failed to get injected module");
             }
 
-            if (module is null)
-            {
-                throw new Exception("Failed to get module after injecting");
-            }
-
-            CallExport(openProcHandle, process, module, entryPoint);
+            CallExport(process, module, openProcHandle, entryPoint);
         }
         finally
         {
@@ -65,15 +56,20 @@ internal class Injector
         }
     }
 
-    private static void LoadLibrary(nint openProcHandle, string filePath)
+    private static void LoadLibrary(Process process, nint openProcHandle, string filePath)
     {
         uint length = (uint)filePath.Length + 1;
 
-        nint loadLibraryAddr = NativeMethods.GetProcAddress(NativeMethods.GetModuleHandleA("kernel32.dll"), "LoadLibraryA");
+        if (!process.TryGetModuleByName("kernel32.dll", out ProcessModule? kernel32Module, ignoreCase: true))
+        {
+            throw new Exception("Failed to obtain remote module kernel32");
+        }
+
+        nint loadLibraryAddr = NativeMethods.GetRemoteProcAddress(process, kernel32Module, "LoadLibraryA");
 
         if (loadLibraryAddr == 0)
         {
-            throw new Exception($"Failed to obtain function pointer to LoadLibraryA");
+            throw new Exception($"Failed to obtain remote function pointer to LoadLibraryA");
         }
 
         nint loadLibraryMemAddr = NativeMethods.VirtualAllocEx(openProcHandle, IntPtr.Zero, length, NativeMethods.MEM_COMMIT | NativeMethods.MEM_RESERVE, NativeMethods.PAGE_READWRITE);
@@ -83,7 +79,10 @@ internal class Injector
             throw new Exception($"Failed to allocate memory for filePath");
         }
 
-        if (!NativeMethods.WriteProcessMemory(openProcHandle, loadLibraryMemAddr, Encoding.UTF8.GetBytes(filePath), length, out _))
+        Span<byte> buffer = stackalloc byte[filePath.Length];
+        Encoding.UTF8.GetBytes(filePath, buffer);
+
+        if (!NativeMethods.WriteProcessMemory(openProcHandle, loadLibraryMemAddr, buffer, length, out _))
         {
             throw new Exception($"Failed to write filePath to remote memory");
         }
@@ -110,7 +109,7 @@ internal class Injector
         }
     }
 
-    private static void CallExport(nint openProcHandle, Process process, ProcessModule module, string entryPoint)
+    private static void CallExport(Process process, ProcessModule module, nint openProcHandle, string entryPoint)
     {
         nint entryAddr = NativeMethods.GetRemoteProcAddress(process, module, entryPoint);
 
@@ -139,18 +138,5 @@ internal class Injector
         {
             NativeMethods.CloseHandle(entryThread);
         }
-    }
-
-    private static bool ProcessContainsModule(Process process, string modulePath)
-    {
-        for (int i = 0; i < process.Modules.Count; i++)
-        {
-            if (process.Modules[i].FileName == modulePath)
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 }
