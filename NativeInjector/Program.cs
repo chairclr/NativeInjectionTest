@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel;
+using System.Diagnostics;
 
 namespace NativeInjector;
 
@@ -34,7 +35,17 @@ internal class Program
 
         if (int.TryParse(processNameOrId, out int processId))
         {
-            process = Process.GetProcessById(processId);
+            try
+            {
+                process = Process.GetProcessById(processId);
+            }
+            catch (ArgumentException)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"No process with id '{processId}' is running");
+                Console.ResetColor();
+                return;
+            }
         }
         else
         {
@@ -42,20 +53,49 @@ internal class Program
 
             if (processes.Length < 1)
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"No process named '{processNameOrId}'");
+                Console.ResetColor();
                 return;
             }
             else if (processes.Length > 1)
             {
-                Console.WriteLine($"Mulitple processes named named '{processNameOrId}'");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Mulitple processes named '{processNameOrId}'");
+                Console.ResetColor();
+                Console.WriteLine($"{"PID",6} {"Name",24} Path");
+                foreach (Process proc in processes)
+                {
+                    string? processPath = null;
+
+                    try
+                    {
+                        processPath = proc.MainModule?.FileName;
+                    }
+                    catch (Win32Exception)
+                    {
+                        processPath = "<Access Denied>";
+                    }
+
+                    Console.WriteLine($"{proc.Id,6} {proc.ProcessName,24} {processPath ?? "Unknown"}");
+                }
                 return;
             }
             else
             {
-                process = processes[0];
+                process = processes.Single();
             }
         }
 
-        Injector.InjectIntoProcess(process, path, entryPoint);
+        try
+        {
+            Injector.InjectIntoProcess(process, path, entryPoint);
+        }
+        catch (Exception ex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(ex.ToString());
+            Console.ResetColor();
+        }
     }
 }
