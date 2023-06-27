@@ -97,7 +97,7 @@ internal class Injector
 
         try
         {
-            int loadLibraryWaitResult = NativeMethods.WaitForSingleObject(loadLibraryThread, Timeout.Infinite);
+            int loadLibraryWaitResult = NativeMethods.WaitForSingleObject(loadLibraryThread);
 
             if (loadLibraryWaitResult != 0)
             {
@@ -128,7 +128,7 @@ internal class Injector
 
         try
         {
-            int entryWaitResult = NativeMethods.WaitForSingleObject(entryThread, Timeout.Infinite);
+            int entryWaitResult = NativeMethods.WaitForSingleObject(entryThread);
 
             if (entryWaitResult != 0)
             {

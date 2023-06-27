@@ -42,7 +42,7 @@ public partial class NativeMethods
     public static partial nint CreateRemoteThread(nint hProcess, nint lpThreadAttributes, uint dwStackSize, nint lpStartAddress, nint lpParameter, uint dwCreationFlags, nint lpThreadId);
 
     [LibraryImport("kernel32.dll")]
-    public static partial int WaitForSingleObject(nint hHandle, int ms);
+    public static partial int WaitForSingleObject(nint hHandle, int ms = Timeout.Infinite);
 
     [LibraryImport("kernel32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -147,37 +147,37 @@ public partial class NativeMethods
     [StructLayout(LayoutKind.Sequential)]
     private unsafe struct IMAGE_DOS_HEADER
     {
-        public ushort e_magic;              // Magic number
-        public ushort e_cblp;               // Bytes on last page of file
-        public ushort e_cp;                 // Pages in file
-        public ushort e_crlc;               // Relocations
-        public ushort e_cparhdr;            // Size of header in paragraphs
-        public ushort e_minalloc;           // Minimum extra paragraphs needed
-        public ushort e_maxalloc;           // Maximum extra paragraphs needed
-        public ushort e_ss;                 // Initial (relative) SS value
-        public ushort e_sp;                 // Initial SP value
-        public ushort e_csum;               // Checksum
-        public ushort e_ip;                 // Initial IP value
-        public ushort e_cs;                 // Initial (relative) CS value
-        public ushort e_lfarlc;             // File address of relocation table
-        public ushort e_ovno;               // Overlay number
-        public ushort e_res_0;              // Reserved words
-        public ushort e_res_1;              // Reserved words
-        public ushort e_res_2;              // Reserved words
-        public ushort e_res_3;              // Reserved words
-        public ushort e_oemid;              // OEM identifier (for e_oeminfo)
-        public ushort e_oeminfo;            // OEM information; e_oemid specific
-        public ushort e_res2_0;             // Reserved words
-        public ushort e_res2_1;             // Reserved words
-        public ushort e_res2_2;             // Reserved words
-        public ushort e_res2_3;             // Reserved words
-        public ushort e_res2_4;             // Reserved words
-        public ushort e_res2_5;             // Reserved words
-        public ushort e_res2_6;             // Reserved words
-        public ushort e_res2_7;             // Reserved words
-        public ushort e_res2_8;             // Reserved words
-        public ushort e_res2_9;             // Reserved words
-        public uint e_lfanew;               // File address of new exe header
+        public ushort e_magic;
+        public ushort e_cblp;
+        public ushort e_cp;
+        public ushort e_crlc;
+        public ushort e_cparhdr;
+        public ushort e_minalloc;
+        public ushort e_maxalloc;
+        public ushort e_ss;
+        public ushort e_sp;
+        public ushort e_csum;
+        public ushort e_ip;
+        public ushort e_cs;
+        public ushort e_lfarlc;
+        public ushort e_ovno;
+        public ushort e_res_0;
+        public ushort e_res_1;
+        public ushort e_res_2;
+        public ushort e_res_3;
+        public ushort e_oemid;
+        public ushort e_oeminfo;
+        public ushort e_res2_0;
+        public ushort e_res2_1;
+        public ushort e_res2_2;
+        public ushort e_res2_3;
+        public ushort e_res2_4;
+        public ushort e_res2_5;
+        public ushort e_res2_6;
+        public ushort e_res2_7;
+        public ushort e_res2_8;
+        public ushort e_res2_9;
+        public uint e_lfanew;
     }
 
     [StructLayout(LayoutKind.Sequential)]

@@ -22,7 +22,7 @@ public class EntryHandler
             Architecture: {(Environment.Is64BitProcess ? "x86_64" : "x86")}
             Assembly Name: {assembly.GetName()}
             Base Directory: {AppContext.BaseDirectory}
-            Stack Trace: 
+            Stack Trace:
             {new StackTrace(true)}
             """;
 
@@ -37,6 +37,7 @@ public class EntryHandler
     private static void Load()
     {
         // Do actual loading and whatnot code in here
-        // The thread that NativeEntry is called in should be freed ASAP
+        // Due to the fact that the injector waits for the NativeEntry thread to exit,
+        // The thread that NativeEntry is called in should exit as soon as possible
     }
 }
